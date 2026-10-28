@@ -8,7 +8,25 @@ Lecture material following OpenAI Spinning Up.
   (https://spinningup.openai.com/en/latest/spinningup/rl_intro.html). Open in a browser; also published at
   https://claude.ai/artifact/TnXGyKVWBHxaHTvTLVwvVw.
 
-## Gridworld lecture page
+## Slidev deck (`slides/`) — the editable version of the lecture (preferred)
+- Run: `cd slides && npm install && npm run dev` (opens http://localhost:3030). Needs Node ≥ 20.19: nvm's default
+  20.16 is too old (rolldown native binding fails); Homebrew's `/opt/homebrew/bin/node` (v26) works.
+  Presenter view: http://localhost:3030/presenter. Export: `npm run export` (PDF; animations become first frames).
+- `slides.md`: headmatter + title slide, then `src:` imports of `pages/part1.md` and `pages/part3.md` (one file per part;
+  Part 2 can come back as `pages/part2.md`). Slide text is Markdown + KaTeX; bullets build with `<v-clicks>`;
+  speaker notes are the `<!-- -->` comment at the end of each slide.
+- `layouts/demo.vue`: kicker + title; `::left::` slot = bullets, live readout below; right = canvas for frontmatter
+  `scene:` + its controls + transport (play/step/reset/speed). `cover: true` = title-style slide.
+  `layouts/code.vue`: slide 22, code block with per-click line highlighting (`{all|1-8|...}{at:0}`).
+- `engine/gridworld.js`: the simulation/drawing code ported from the HTML (no DOM UI). Scenes are registered by id in
+  SCENE_IDS (order must match the scene list). Seeded RNG `rand()` (not Math.random); reseeded per slide on entry/reset.
+- `setup/shortcuts.ts`: p play/pause, . step, r reset, +/- speed (plus Slidev's own keys: arrows, o overview, d dark, g goto).
+- `global-top.vue`: footer (part label from nearest `part:` frontmatter, progress, slide number). `style.css`: theme tokens
+  (light + `html.dark`), layout and readout styles.
+- Part 2 is NOT ported (still in the HTML file and git history).
+- Slide 1 numbering matches the HTML deck (27 slides).
+
+## Gridworld lecture page (original single-file HTML)
 - 5×5 grid, start bottom-left, goal +10 (top-right), lava −50 (changed from −10 so policy gradient doesn't learn to suicide into lava),
   step −1, walls; "slip" = prob of sliding sideways. Constants R_GOAL/R_LAVA/R_STEP.
 - 16:9 slide deck (1600×900 stage scaled to fit), 27 slides; footer shows current part. Covers Spinning Up Parts 1 and 3:
@@ -27,7 +45,6 @@ Lecture material following OpenAI Spinning Up.
   (The 3×3 patch never aliased in this layout anyway; a plus-shaped view would alias (3,1)/(3,3).)
 - Slide 9 shows sampling only (softmax; a = μ + σ⊙z), no log π. The log π formulas (categorical, Gaussian) live on slide 22
   as a build under the "loss" bullet (HL=[1,2,2,3,4,2]).
-- Not yet committed.
 - (Part 2, hidden) bullet reads "Policy gradients raise π(a|s) for actions with positive advantage."
 - Known quirks (offered fixes, not yet requested): slide 9 histogram fixed to [−20, 10] and rollouts capped at 200 steps;
   slide 11 Q* argmax circles show at sweep 0; temperature slider absent on slide 9; with slip 0.6 + γ 0.99 the optimal
