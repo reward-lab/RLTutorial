@@ -218,8 +218,7 @@ function chart(c,w,h,series,o={}){const lo=o.lo??-12,hi=o.hi??0,win=o.win||30,fs
     if(s.label){const p=s.c.at(-1);let m=0,k=Math.min(win,s.c.length);for(let i=s.c.length-k;i<s.c.length;i++)m+=s.c[i].y;m/=k;c.fillStyle=s.col;c.font=font(600,fs);const lx=X(p.x),left=lx<pl+c.measureText(s.label).width+10;c.textAlign=left?'left':'right';c.textBaseline='bottom';c.fillText(s.label,left?lx+8:lx,Y(m)-6)}}}
 const statsHtml=tr=>{const a=tr.avg();return`<div class="stats"><div><div class="muted">env steps</div><div class="big">${tr.steps}</div></div><div><div class="muted">episodes</div><div class="big">${tr.episodes}</div></div><div><div class="muted">avg return</div><div class="big ${a==null?'':sgn(a)}">${a==null?'—':fmt(a,2)}</div></div></div>`};
 function trainerScene(o){let fast=o.fast??true;const tr=new Trainer(o.mk);
-  return{kicker:o.kicker||'Kinds of RL algorithms',title:o.title,points:o.points,notes:o.notes,
-    controls:()=>[{type:'seg',label:'Animation',opts:[['watch','Every step'],['fast','Fast-forward']],get:()=>fast?'fast':'watch',set:v=>fast=v==='fast'},...(o.controls?o.controls(tr):[])],
+  return{controls:()=>[{type:'seg',label:'Animation',opts:[['watch','Every step'],['fast','Fast-forward']],get:()=>fast?'fast':'watch',set:v=>fast=v==='fast'},...(o.controls?o.controls(tr):[])],
     onModel(){tr.reset()},enter(){tr.reset()},reset(){tr.reset()},step(){tr.manual()},update(dt){tr.update(dt,playing,fast)},
     draw(){o.draw(tr,fast);drawTrail(tr);drawAgent(tr.pos())},
     panelCanvas:o.curve!==false,drawPanel(pg,w,h){chart(pg,w,h,[{c:tr.curve,col:tk.agent}])},
@@ -260,42 +259,28 @@ const scenes=[];
 
 /* Cover */
 {const run=new Runner({pi:()=>model().pi.soft});
-scenes.push({cover:true,kicker:'',title:'',part:'Introduction to RL',
-  coverHtml:`<div class="kicker">Lecture</div><h2 style="margin-top:14px">Introduction to Reinforcement Learning</h2><div class="sub">One robot. One gridworld. The key concepts, then the policy gradient.</div><div class="meta">Based on OpenAI Spinning Up, Parts 1 &amp; 3</div>`,
-  points:[],notes:'Everything in this lecture happens on this one 5×5 grid. Part 1 builds the vocabulary; Part 3 derives and runs the policy gradient. Press → to begin.',
-  controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
+scenes.push({controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
   draw(){drawWorld();drawTrail(run);drawAgent(run.pos())}})}
 
 /* Section header */
-function header(num,title,sub,part,kind,notes){const run=new Runner({pi:()=>model().pi[kind]});
-  return{cover:true,kicker:'',title:'',part,points:[],notes,
-    coverHtml:`<div class="kicker">${num}</div><h2 style="margin-top:14px">${title}</h2><div class="sub">${sub}</div><div class="meta">spinningup.openai.com</div>`,
-    controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
+function header(kind){const run=new Runner({pi:()=>model().pi[kind]});
+  return{controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
     draw(){drawWorld();drawTrail(run);drawAgent(run.pos())}}}
-scenes.push(header('Part 1','Key Concepts in RL','States, actions, policies, returns and value functions: the vocabulary of reinforcement learning.','Part 1 · Key Concepts','random',
-  'This robot acts completely at random. By the end of Part 1 we will be able to say precisely how bad that is, and what the best policy looks like.'));
+scenes.push(header('random'));
 
 /* What can RL do */
-scenes.push(trainerScene({kicker:'Part 1',title:'What can RL do?',mk:L_AC,curve:false,
-  points:['Control robots, in simulation and in the real world.','Beat top human players at strategy games: Go and Dota.','Play Atari games straight from raw pixels.','Teach simulated robots to follow human instructions.'],
-  notes:'These are Spinning Up’s opening examples. The robot on the right starts knowing nothing and improves by trial and error (a simple actor-critic learner, a close cousin of the policy gradient in Part 3). Every success on the left is this same loop at a much larger scale.',
+scenes.push(trainerScene({mk:L_AC,curve:false,
   draw(tr){drawWorld({pi:tr.L.pi()})},
   live(tr){const a=tr.avg();return`<div class="muted">The robot on the right started knowing nothing. It learns only from reward.</div>${statsHtml(tr)}`}}));
 
 /* Meet the gridworld */
 {const run=new Runner({pi:()=>model().pi.soft,onStep:(r,st)=>addFloat(st.s2,(st.r>0?'+':'')+fmt(st.r,0),st.r>0?'pos':'neg')});
-scenes.push({kicker:'The running example',title:'Meet the gridworld',
-  points:['A robot starts in the bottom-left corner.','Goal: <b class="pos">+10</b>. Lava: <b class="neg">−50</b>. Either one ends the episode.','Every other step costs <b class="neg">−1</b>, so shorter paths are better.','The floor is slippery: sometimes the robot slides sideways instead.'],
-  notes:'Point at each element on the grid as you reveal it. Slip = probability of sliding sideways; we will use it to make the environment random.',
-  controls:()=>[slipCtl],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
+scenes.push({controls:()=>[slipCtl],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
   draw(dt){drawWorld();drawTrail(run);drawAgent(run.pos());drawFloats(dt)}})}
 
 /* 1 — loop */
 {const run=new Runner({pi:()=>model().pi.random});
-scenes.push({kicker:'Key concepts',title:'Agent and environment',
-  points:['The agent observes the state and picks an action.','The environment moves to a new state and hands back a reward.','The agent’s goal: maximize its cumulative reward, the <b>return</b>.'],
-  notes:'The robot is the agent. Everything else (walls, lava, goal, the rules of motion) is the environment. This agent acts at random. It has no idea what it is doing yet; the rest of the lecture is about fixing that.',
-  extra:`<svg class="loop" viewBox="0 0 320 190" role="img" aria-label="Agent–environment loop">
+scenes.push({extra:`<svg class="loop" viewBox="0 0 320 190" role="img" aria-label="Agent–environment loop">
     <rect class="box" x="100" y="10" width="120" height="44" rx="8"/><text x="160" y="38" text-anchor="middle">Agent</text>
     <rect class="box" x="85" y="136" width="150" height="44" rx="8"/><text x="160" y="164" text-anchor="middle">Environment</text>
     <g class="flow" id="fa"><path d="M220,32 C300,32 300,158 241,158"/><polygon points="235,158 245,152 245,164"/></g>
@@ -310,19 +295,13 @@ scenes.push({kicker:'Key concepts',title:'Agent and environment',
 
 /* 2 — states & observations */
 {const run=new Runner({pi:()=>model().pi.random});
-scenes.push({kicker:'Key concepts',title:'States and observations',
-  points:['State <i>s</i>: a complete description of the world.','Here <i>s</i> = (row, column): the map never changes, so position is everything.','Observation <i>o</i>: what the agent sees. Our agent sees the full state, <i>o</i> = <i>s</i>.'],
-  notes:'The walls, lava and goal are fixed parts of the environment, so the agent’s position is the whole state. In general an agent may see only part of the state; we assume full observability throughout.',
-  controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
+scenes.push({controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
   draw(){drawWorld({});drawAgent(run.pos())},
   live(){return`<div><i>s<sub>t</sub></i> = <span class="big">${lbl(run.to)}</span> <span class="muted">(row, column)</span></div>`}})}
 
 /* 3 — action spaces */
 {const run=new Runner({pi:()=>model().pi.random});let mode='disc';const ct=makeCont();
-scenes.push({kicker:'Key concepts',title:'Action spaces',
-  points:['The action space is the set of all valid actions.',EQ(`<div>discrete: <i>a</i> ∈ {↑, →, ↓, ←}</div><div>continuous: <i>a</i> ∈ ℝ<sup>2</sup></div>`),'Our robot has 4 moves. A robot arm outputs a real-valued vector.','Some algorithms only work with one of the two.'],
-  notes:'Flip to “Continuous” under the grid: now the agent picks a 2-D velocity. The yellow arrow is the action taken; faint arrows are other actions it could have sampled.',
-  controls:()=>[{type:'seg',label:'Action space',opts:[['disc','Discrete'],['cont','Continuous']],get:()=>mode,set:v=>{mode=v;run.reset();ct.reset()}},
+scenes.push({controls:()=>[{type:'seg',label:'Action space',opts:[['disc','Discrete'],['cont','Continuous']],get:()=>mode,set:v=>{mode=v;run.reset();ct.reset()}},
     ...(mode==='cont'?[{type:'range',label:'Spread σ',min:.05,max:1.5,step:.05,get:()=>P.sigma,set:v=>P.sigma=v,fmt:v=>v.toFixed(2)}]:[])],
   enter(){run.reset();ct.reset()},
   update(dt){mode==='disc'?run.update(dt,playing):ct.update(dt,playing)},
@@ -334,23 +313,14 @@ scenes.push({kicker:'Key concepts',title:'Action spaces',
 
 /* 4 — policies */
 {let kind='greedy',hi=-1;const run=new Runner({pi:()=>model().pi[kind],onStep:(r,st)=>hi=st.a});
-scenes.push({kicker:'Key concepts',title:'Policies',
-  points:['A policy is the agent’s rule for choosing actions.',EQ(`<div>deterministic: <i>a<sub>t</sub></i> = <i>μ</i>(<i>s<sub>t</sub></i>)</div><div>stochastic: <i>a<sub>t</sub></i> ∼ <i>π</i>(· | <i>s<sub>t</sub></i>)</div>`),'In deep RL the policy is a neural network with weights <i>θ</i>: <i>π<sub>θ</sub></i>.'],
-  notes:'The arrows in every cell ARE the policy. Switch to Softmax and drag the temperature from 0.1 to 5: near-deterministic blurs into uniform random. The bars show π(·|s) at the robot’s cell; yellow is the sampled action.',
-  controls:()=>[{type:'seg',label:'Policy',opts:[['greedy','Deterministic'],['soft','Stochastic'],['random','Random']],get:()=>kind,set:v=>{kind=v;run.reset()}},...(kind==='soft'?[tempCtl]:[])],
+scenes.push({controls:()=>[{type:'seg',label:'Policy',opts:[['greedy','Deterministic'],['soft','Stochastic'],['random','Random']],get:()=>kind,set:v=>{kind=v;run.reset()}},...(kind==='soft'?[tempCtl]:[])],
   enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
   draw(){drawWorld({pi:model().pi[kind]});drawAgent(run.pos())},
   live(){const s=run.steps.length?run.steps.at(-1).s:run.s;return policyLive(model().pi[kind],s,hi)}})}
 
 /* Stochastic policies in practice */
 {let mode='cat',hi=-1;const run=new Runner({pi:()=>model().pi.soft,onStep:(r,st)=>hi=st.a});const ct=makeCont();
-scenes.push({kicker:'Key concepts',title:'Stochastic policies in practice',
-  points:['Categorical, for discrete actions: the network outputs one logit per action; softmax turns them into probabilities.',
-    '~'+`<i>π<sub>θ</sub></i>(·|<i>s</i>) = softmax(logits), &nbsp; <i>a</i> ∼ <i>π<sub>θ</sub></i>(·|<i>s</i>)`,
-    'Diagonal Gaussian, for continuous actions: the network outputs a mean <i>μ<sub>θ</sub></i>(<i>s</i>); log <i>σ</i> is learned too.',
-    '~'+`<i>a</i> = <i>μ<sub>θ</sub></i>(<i>s</i>) + <i>σ<sub>θ</sub></i>(<i>s</i>) ⊙ <i>z</i>, &nbsp; <i>z</i> ∼ 𝒩(0, <i>I</i>)`],
-  notes:'A stochastic policy is a distribution we can sample from. Your notebook’s Categorical(logits=logits_net(obs)) is the first case. Here the logits are Q*(s,a)/T. Switch to Gaussian to see μ, σ and the noise z behind each sampled 2-D action. log σ is learned rather than σ because it can be any real number.',
-  controls:()=>[{type:'seg',label:'Policy',opts:[['cat','Categorical'],['gauss','Diagonal Gaussian']],get:()=>mode,set:v=>{mode=v;run.reset();ct.reset()}},
+scenes.push({controls:()=>[{type:'seg',label:'Policy',opts:[['cat','Categorical'],['gauss','Diagonal Gaussian']],get:()=>mode,set:v=>{mode=v;run.reset();ct.reset()}},
     ...(mode==='cat'?[tempCtl]:[{type:'range',label:'σ',min:.1,max:1.5,step:.05,get:()=>P.sigma,set:v=>P.sigma=v,fmt:v=>v.toFixed(2)}])],
   enter(){run.reset();ct.reset()},update(dt){mode==='cat'?run.update(dt,playing):ct.update(dt,playing)},
   step(){mode==='cat'?run.manual():ct.manual()},reset(){run.reset();ct.reset()},
@@ -362,10 +332,7 @@ scenes.push({kicker:'Key concepts',title:'Stochastic policies in practice',
 
 /* 5 — trajectories */
 {let kind='greedy',trails=[];const run=new Runner({pi:()=>model().pi[kind],onEnd:r=>{trails.push(r.trail.slice());if(trails.length>12)trails.shift()}});
-scenes.push({kicker:'Key concepts',title:'Trajectories',
-  points:['A trajectory is the sequence of states and actions in an episode.',EQ(`<div>τ = (<i>s</i><sub>0</sub>, <i>a</i><sub>0</sub>, <i>s</i><sub>1</sub>, <i>a</i><sub>1</sub>, …)</div><div><i>s</i><sub><i>t</i>+1</sub> ∼ <i>P</i>(· | <i>s<sub>t</sub></i>, <i>a<sub>t</sub></i>)</div>`),'Same policy, random transitions: different trajectories every time.'],
-  notes:'The policy here is deterministic, so all the randomness comes from the slippery floor. Set slip to 0: every trajectory is identical. Raise it: the grey paths fan out. Red chips are slips.',
-  controls:()=>[kindSeg(()=>kind,v=>{kind=v;run.reset();trails=[]},['greedy','soft']),slipCtl],
+scenes.push({controls:()=>[kindSeg(()=>kind,v=>{kind=v;run.reset();trails=[]},['greedy','soft']),slipCtl],
   onModel(){trails=[]},
   enter(){run.reset();trails=[]},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset(){run.reset();trails=[]},
   draw(){drawWorld({trails,trailCol:tk.muted,trailAlpha:i=>.15+.45*(i+1)/trails.length});drawTrail(run);drawAgent(run.pos())},
@@ -377,10 +344,7 @@ scenes.push({kicker:'Key concepts',title:'Trajectories',
 {let mode='disc',hist=[];const ret=steps=>steps.reduce((G,st)=>G+(mode==='disc'?P.gamma**st.t:1)*st.r,0);
 const run=new Runner({pi:()=>model().pi.soft,horizon:()=>mode==='fin'?P.horizon:120,
   onStep:(r,st)=>addFloat(st.s2,(st.r>0?'+':'')+fmt(st.r,0),st.r>0?'pos':'neg'),onEnd:r=>{hist.unshift(ret(r.steps));hist=hist.slice(0,5)}});
-scenes.push({kicker:'Key concepts',title:'Reward and return',
-  points:[EQ(`<i>r<sub>t</sub></i> = <i>R</i>(<i>s<sub>t</sub></i>, <i>a<sub>t</sub></i>, <i>s</i><sub><i>t</i>+1</sub>)`),'The return adds up the rewards of a whole trajectory.',EQ(`<div><i>R</i>(τ) = Σ<sub><i>t</i>=0</sub><sup><i>T</i></sup> <i>r<sub>t</sub></i> &nbsp;<span class="muted" style="font-size:20px">finite horizon</span></div><div><i>R</i>(τ) = Σ<sub><i>t</i>=0</sub><sup>∞</sup> γ<sup><i>t</i></sup><i>r<sub>t</sub></i> &nbsp;<span class="muted" style="font-size:20px">discounted</span></div>`),'γ < 1: a reward now is worth more than the same reward later.'],
-  notes:'Lower γ toward 0 and watch the γ^t column collapse: far-future rewards (like the +10 goal) barely count, so the agent becomes short-sighted. Finite-horizon mode cuts the episode at T steps.',
-  controls:()=>[{type:'seg',label:'Return',opts:[['fin','Finite horizon'],['disc','Discounted']],get:()=>mode,set:v=>{mode=v;run.reset();hist=[]}},
+scenes.push({controls:()=>[{type:'seg',label:'Return',opts:[['fin','Finite horizon'],['disc','Discounted']],get:()=>mode,set:v=>{mode=v;run.reset();hist=[]}},
     mode==='disc'?{...gammaCtl,set:v=>{P.gamma=v;M=null}}:{type:'range',label:'Horizon T',min:3,max:20,step:1,get:()=>P.horizon,set:v=>P.horizon=v,fmt:v=>v}],
   enter(){run.reset();hist=[]},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset(){run.reset();hist=[]},
   draw(dt){drawWorld();drawTrail(run);drawAgent(run.pos());drawFloats(dt)},
@@ -394,10 +358,7 @@ scenes.push({kicker:'Key concepts',title:'Reward and return',
 const reset=()=>{rets=[];visits=new Array(N).fill(0);last=[]};
 function rollout(){const pi=model().pi[kind];let s=S0,G=0,d=1,t=0;const tr=[s];while(!isTerm(s)&&t<200){visits[s]++;const{s2}=sampleMove(s,sampleCat(pi[s]));G+=d*reward(s2);d*=P.gamma;s=s2;t++;tr.push(s)}rets.push(G);last=tr}
 let acc=0;
-scenes.push({kicker:'Key concepts',title:'The RL problem',
-  points:['The return is random: it depends on the policy and on the environment.','So we maximize the <b>expected</b> return:',EQ(`<div><i>J</i>(π) = E<sub>τ∼π</sub>[ <i>R</i>(τ) ]</div><div>π* = arg max<sub>π</sub> <i>J</i>(π)</div>`)],
-  notes:'Each tick runs a dozen episodes. Blue shading = where the agent spends time. The yellow line (sample average) converges to the dashed line (exact J). Compare Random vs Greedy.',
-  controls:()=>[kindSeg(()=>kind,v=>{kind=v;reset()}),gammaCtl,slipCtl],
+scenes.push({controls:()=>[kindSeg(()=>kind,v=>{kind=v;reset()}),gammaCtl,slipCtl],
   onModel:reset,enter:reset,reset,step:rollout,
   update(dt){if(!playing)return;acc+=dt*P.speed*12;while(acc>=1){acc--;rollout()}},
   panelCanvas:true,
@@ -415,10 +376,7 @@ scenes.push({kicker:'Key concepts',title:'The RL problem',
 /* 8 — value functions */
 {let kind='random',show='V',V=new Array(N).fill(0),k=0,delta=0,acc=0;const reset=()=>{V=new Array(N).fill(0);k=0;delta=0};
 const sweep=()=>{const o=evalSweep(V,model().pi[kind]);V=o.V;delta=o.delta;k++};
-scenes.push({kicker:'Key concepts',title:'Value functions',
-  points:['How good is it to be here, if I follow π from now on?',EQ(`<div><i>V</i><sup>π</sup>(<i>s</i>) = E<sub>τ∼π</sub>[ <i>R</i>(τ) | <i>s</i><sub>0</sub>=<i>s</i> ]</div><div><i>Q</i><sup>π</sup>(<i>s</i>,<i>a</i>) = E<sub>τ∼π</sub>[ <i>R</i>(τ) | <i>s</i><sub>0</sub>=<i>s</i>, <i>a</i><sub>0</sub>=<i>a</i> ]</div>`),'<i>Q</i> fixes the first action, then follows π.'],
-  notes:'Play runs iterative policy evaluation: each sweep spreads value one more step out from the goal and the lava. Random π: cells near lava are badly negative. Switch to Greedy: the whole map turns positive. Toggle Q to see four triangles per cell.',
-  controls:()=>[kindSeg(()=>kind,v=>{kind=v;reset()}),{type:'seg',label:'Show',opts:[['V','V'],['Q','Q']],get:()=>show,set:v=>show=v},gammaCtl,slipCtl],
+scenes.push({controls:()=>[kindSeg(()=>kind,v=>{kind=v;reset()}),{type:'seg',label:'Show',opts:[['V','V'],['Q','Q']],get:()=>show,set:v=>show=v},gammaCtl,slipCtl],
   onModel:reset,enter:reset,reset,step:sweep,
   update(dt){if(!playing||(k>0&&delta<1e-4))return;acc+=dt*P.speed;if(acc>.45){acc=0;sweep()}},
   draw(){show==='V'?drawWorld({heat:V,nums:V}):drawWorld({q:qFrom(V)})},
@@ -427,10 +385,7 @@ scenes.push({kicker:'Key concepts',title:'Value functions',
 /* 9 — optimal */
 {let show='V',V=new Array(N).fill(0),k=0,delta=0,acc=0;const reset=()=>{V=new Array(N).fill(0);k=0;delta=0};
 const sweep=()=>{const o=viSweep(V);V=o.V;delta=o.delta;k++};
-scenes.push({kicker:'Key concepts',title:'Optimal values and the optimal action',
-  points:['Same questions, under the best possible policy.',EQ(`<div><i>V</i>*(<i>s</i>) = max<sub>π</sub> <i>V</i><sup>π</sup>(<i>s</i>)</div><div><i>Q</i>*(<i>s</i>,<i>a</i>) = max<sub>π</sub> <i>Q</i><sup>π</sup>(<i>s</i>,<i>a</i>)</div>`),'Know <i>Q</i>* and acting optimally is easy:',EQ(`<i>a</i>*(<i>s</i>) = arg max<sub><i>a</i></sub> <i>Q</i>*(<i>s</i>,<i>a</i>)`)],
-  notes:'Play runs value iteration; the arrows are the greedy action under the current estimate, so the optimal policy emerges as values settle. Raise slip to 0.4: the route starts avoiding cells next to lava, even if longer.',
-  controls:()=>[{type:'seg',label:'Show',opts:[['V','V* + a*'],['Q','Q*']],get:()=>show,set:v=>show=v},gammaCtl,slipCtl],
+scenes.push({controls:()=>[{type:'seg',label:'Show',opts:[['V','V* + a*'],['Q','Q*']],get:()=>show,set:v=>show=v},gammaCtl,slipCtl],
   onModel:reset,enter:reset,reset,step:sweep,
   update(dt){if(!playing||(k>0&&delta<1e-4))return;acc+=dt*P.speed;if(acc>.45){acc=0;sweep()}},
   draw(){const Q=qFrom(V);if(show==='V'){const pi=k?ALL.map(s=>{const p=[0,0,0,0];p[argmax(Q[s])]=1;return p}):null;drawWorld({heat:V,nums:V,pi})}else drawWorld({q:Q,qMark:true})},
@@ -438,10 +393,7 @@ scenes.push({kicker:'Key concepts',title:'Optimal values and the optimal action'
 
 /* 10 — Bellman */
 {let mode='pi',sel=17,ai=0,acc=0;
-scenes.push({kicker:'Key concepts',title:'Bellman equations',
-  points:['Value here = reward now + discounted value of where you land.',EQ(`<div><i>V</i><sup>π</sup>(<i>s</i>) = E<sub><i>a</i>∼π, <i>s′</i>∼<i>P</i></sub>[ <i>r</i> + γ<i>V</i><sup>π</sup>(<i>s′</i>) ]</div><div><i>V</i>*(<i>s</i>) = max<sub><i>a</i></sub> E<sub><i>s′</i>∼<i>P</i></sub>[ <i>r</i> + γ<i>V</i>*(<i>s′</i>) ]</div>`),'π: average over actions. *: best action.'],
-  notes:'Click any cell on the grid. The animation cycles through the four actions and draws where each one can land, with probabilities. The panel works the equation with the real numbers; the total matches the number in the cell.',
-  controls:()=>[{type:'seg',label:'Equation',opts:[['pi','V^π (random)'],['star','V*']],get:()=>mode,set:v=>mode=v},gammaCtl,slipCtl],
+scenes.push({controls:()=>[{type:'seg',label:'Equation',opts:[['pi','V^π (random)'],['star','V*']],get:()=>mode,set:v=>mode=v},gammaCtl,slipCtl],
   click:s=>{sel=s;ai=0},reset:()=>ai=0,step:()=>ai=(ai+1)%4,enter(){},
   update(dt){if(!playing)return;acc+=dt*P.speed;if(acc>1.8){acc=0;ai=(ai+1)%4}},
   draw(){const V=mode==='pi'?Vpi('random'):model().Vs;drawWorld({heat:V,nums:V,numDigits:2,sel});
@@ -459,10 +411,7 @@ scenes.push({kicker:'Key concepts',title:'Bellman equations',
 
 /* 11 — advantage */
 {let kind='random',sel=17;
-scenes.push({kicker:'Key concepts',title:'Advantage functions',
-  points:['How much better is action <i>a</i> than what π does on average?',EQ(`<i>A</i><sup>π</sup>(<i>s</i>,<i>a</i>) = <i>Q</i><sup>π</sup>(<i>s</i>,<i>a</i>) − <i>V</i><sup>π</sup>(<i>s</i>)`),'Green: better than average. Red: worse.','Policy gradients raise <i>π</i>(<i>a</i>|<i>s</i>) for actions with positive advantage.'],
-  notes:'Under the random policy, advantages point toward the goal and away from lava: that is the learning signal. Switch to Greedy: the chosen action has advantage 0 and the rest are negative. Nothing left to improve. Click a cell for its numbers.',
-  controls:()=>[kindSeg(()=>kind,v=>kind=v),...(kind==='soft'?[tempCtl]:[]),gammaCtl,slipCtl],
+scenes.push({controls:()=>[kindSeg(()=>kind,v=>kind=v),...(kind==='soft'?[tempCtl]:[]),gammaCtl,slipCtl],
   click:s=>sel=s,enter(){},
   draw(){const V=Vpi(kind),Q=Qpi(kind),A=Q.map((q,s)=>q.map(x=>NT.includes(s)?x-V[s]:0));const sc=Math.max(1,...A.flat().map(Math.abs));drawWorld({q:A,qScale:sc,sel})},
   live(){const V=Vpi(kind)[sel],Q=Qpi(kind)[sel],pi=model().pi[kind][sel],A=Q.map(q=>q-V);
@@ -470,13 +419,7 @@ scenes.push({kicker:'Key concepts',title:'Advantage functions',
 
 /* Formalism */
 {const run=new Runner({pi:()=>model().pi.soft});
-scenes.push({kicker:'Key concepts',title:'The formal picture',
-  points:['~'+`A Markov decision process: ⟨ <i>S</i>, <i>A</i>, <i>R</i>, <i>P</i>, <i>ρ</i><sub>0</sub> ⟩`,
-    'Markov property: the next state depends only on the current state and action, not on the history.',
-    '~'+`<div><i>P</i>(τ|π) = <i>ρ</i><sub>0</sub>(<i>s</i><sub>0</sub>) ∏<sub><i>t</i></sub> <i>P</i>(<i>s</i><sub><i>t</i>+1</sub>|<i>s<sub>t</sub></i>, <i>a<sub>t</sub></i>) π(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>)</div><div><i>J</i>(π) = ∫<sub>τ</sub> <i>P</i>(τ|π) <i>R</i>(τ) = E<sub>τ∼π</sub>[ <i>R</i>(τ) ]</div>`,
-    '~'+`<div><i>V</i><sup>π</sup>(<i>s</i>) = E<sub><i>a</i>∼π</sub>[ <i>Q</i><sup>π</sup>(<i>s</i>,<i>a</i>) ]</div><div><i>V</i>*(<i>s</i>) = max<sub><i>a</i></sub> <i>Q</i>*(<i>s</i>,<i>a</i>)</div>`],
-  notes:'Map each symbol onto the grid: S = the 22 open cells, A = 4 moves, R = −1/+10/−50, P = the slip rule, ρ₀ = always the start cell. The live readout multiplies π(a|s)·P(s′|s,a) for every step of the current episode: the probability of this exact trajectory shrinks fast, which is why we work with log-probabilities.',
-  controls:()=>[slipCtl],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
+scenes.push({controls:()=>[slipCtl],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
   draw(){drawWorld();drawTrail(run);drawAgent(run.pos())},
   live(){const pi=model().pi.soft;let lp=0;for(const st of run.steps){const pt=trans(st.s,st.a).find(x=>x.s2===st.s2);lp+=Math.log10(pi[st.s][st.a]*(pt?pt.p:0))}
     const ex=Math.floor(lp),man=10**(lp-ex);
@@ -484,15 +427,11 @@ scenes.push({kicker:'Key concepts',title:'The formal picture',
 
 
 /* ===== Part 3 ===== */
-scenes.push(header('Part 3','Intro to Policy Optimization','Derive the policy gradient, implement it, then make it learn faster.','Part 3 · Intro to Policy Optimization','soft',
-  'Part 1 gave us J(π) and the advantage. Now we improve a policy directly by gradient ascent on J. From here on, returns are finite-horizon and undiscounted (episodes capped at 50 steps), as in Spinning Up Part 3.'));
+scenes.push(header('soft'));
 
 /* Gradient ascent on the policy */
 {let L=makePG3('base'),acc=0;const reset=()=>{L=makePG3('base')};
-scenes.push({kicker:'Part 3',title:'Gradient ascent on the policy',
-  points:['Parameterize the policy as <i>π<sub>θ</sub></i>. Here <i>θ</i> is one logit per cell and action: 22 × 4 numbers.','='+`<i>θ</i><sub><i>k</i>+1</sub> = <i>θ<sub>k</sub></i> + <i>α</i> ∇<sub><i>θ</i></sub> <i>J</i>(<i>π<sub>θ</sub></i>)`,'<i>J</i> uses the finite-horizon, undiscounted return: <i>R</i>(τ) = Σ<sub><i>t</i></sub> <i>r<sub>t</sub></i>.','The catch: <i>J</i> is an expectation over trajectories. How do we take its gradient?'],
-  notes:'The arrows are softmax(θ) in every cell, starting uniform. Press play: θ climbs J and the arrows sharpen toward the goal. The rest of Part 3 explains the update that makes this happen.',
-  controls:()=>[],enter:reset,reset,onModel:reset,step(){L.trainEpoch()},
+scenes.push({controls:()=>[],enter:reset,reset,onModel:reset,step(){L.trainEpoch()},
   update(dt){if(!playing)return;acc+=dt*P.speed*8;while(acc>=1){acc--;L.trainEpoch()}},
   draw(){drawWorld({pi:L.table()})},
   live(){const th=L.th[S0],p=L.pi(S0),c=L.curve.slice(-10),a=c.length?c.reduce((x,q)=>x+q.y,0)/c.length:null;
@@ -501,14 +440,7 @@ scenes.push({kicker:'Part 3',title:'Gradient ascent on the policy',
 
 /* Derivation, step 1 */
 {const run=new Runner({pi:()=>model().pi.soft,horizon:()=>T3});
-scenes.push({kicker:'Part 3',title:'Deriving the policy gradient: the ingredients',
-  points:['~'+`<i>P</i>(τ|<i>θ</i>) = <i>ρ</i><sub>0</sub>(<i>s</i><sub>0</sub>) ∏<sub><i>t</i></sub> <i>P</i>(<i>s</i><sub><i>t</i>+1</sub>|<i>s<sub>t</sub></i>,<i>a<sub>t</sub></i>) <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>)`,
-    '~'+`Log-derivative trick: ∇<sub><i>θ</i></sub><i>P</i>(τ|<i>θ</i>) = <i>P</i>(τ|<i>θ</i>) ∇<sub><i>θ</i></sub> log <i>P</i>(τ|<i>θ</i>)`,
-    '~'+`log <i>P</i>(τ|<i>θ</i>) = log <i>ρ</i><sub>0</sub>(<i>s</i><sub>0</sub>) + Σ<sub><i>t</i></sub> [ log <i>P</i>(<i>s</i><sub><i>t</i>+1</sub>|<i>s<sub>t</sub></i>,<i>a<sub>t</sub></i>) + log <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>) ]`,
-    'The environment terms don’t depend on <i>θ</i>, so their gradient is zero:',
-    '='+`∇<sub><i>θ</i></sub> log <i>P</i>(τ|<i>θ</i>) = Σ<sub><i>t</i></sub> ∇<sub><i>θ</i></sub> log <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>)`],
-  notes:'Walk through the facts one by one. The table splits the current trajectory’s log-probability into the part we control (policy, blue) and the part we don’t (environment, grey). Only the blue part changes with θ, which is why we never need to know P.',
-  controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
+scenes.push({controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
   draw(){drawWorld();drawTrail(run);drawAgent(run.pos())},
   live(){const pi=model().pi.soft;let lpi=0,lp=0;const rows=run.steps.map(st=>{const p=pi[st.s][st.a],e=trans(st.s,st.a).find(x=>x.s2===st.s2).p;lpi+=Math.log(p);lp+=Math.log(e);
       return`<tr><td>${st.t}</td><td>${ARW[st.a]}</td><td style="color:var(--agent)">${p.toFixed(2)}</td><td class="muted">${e.toFixed(2)}</td></tr>`}).slice(-4).join('');
@@ -521,14 +453,7 @@ const newBatch=()=>{eps=[];for(let i=0;i<L.batch;i++)eps.push(L.rollout());shown
 const reset=()=>{L=makePG3('R');lastAvg=null;newBatch()};
 const tick=()=>{if(phase==='collect'){shown++;if(shown>=eps.length)phase='update'}else{lastAvg=L.update(eps);newBatch()}};
 reset();
-scenes.push({kicker:'Part 3',title:'Deriving the policy gradient: the result',
-  points:['~'+`∇<sub><i>θ</i></sub><i>J</i> = ∫<sub>τ</sub> ∇<sub><i>θ</i></sub><i>P</i>(τ|<i>θ</i>) <i>R</i>(τ) = E<sub>τ∼π<sub><i>θ</i></sub></sub>[ ∇<sub><i>θ</i></sub> log <i>P</i>(τ|<i>θ</i>) <i>R</i>(τ) ]`,
-    '='+`∇<sub><i>θ</i></sub><i>J</i>(<i>π<sub>θ</sub></i>) = E<sub>τ∼π<sub><i>θ</i></sub></sub>[ Σ<sub><i>t</i></sub> ∇<sub><i>θ</i></sub> log <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>) <i>R</i>(τ) ]`,
-    'It’s an expectation, so we estimate it from a batch 𝒟 of sampled trajectories:',
-    '~'+`<i>ĝ</i> = (1/|𝒟|) Σ<sub>τ∈𝒟</sub> Σ<sub><i>t</i></sub> ∇<sub><i>θ</i></sub> log <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>) <i>R</i>(τ)`,
-    'No model of the environment needed: just log-probabilities and returns.'],
-  notes:'Each epoch collects 10 trajectories with the current policy (green: reached the goal, red: lava, grey: timed out), then takes one gradient step. Every action in a high-return trajectory is pushed up, every action in a low-return one pushed down. This is exactly what your notebook does. Use + to speed it up.',
-  controls:()=>[],enter:reset,reset,onModel:reset,step:tick,
+scenes.push({controls:()=>[],enter:reset,reset,onModel:reset,step:tick,
   update(dt){if(!playing)return;acc+=dt*P.speed;if(acc>=(phase==='collect'?.18:.5)){acc=0;tick()}},
   draw(){drawWorld({pi:L.table()});eps.slice(0,shown).forEach(ep=>{const end=ep.at(-1).s2;drawEpisode(ep,rgba(typ(end)==='G'?tk.pos:typ(end)==='L'?tk.neg:tk.muted,.55))})},
   live(){return`<div class="stats"><div><div class="muted">epoch</div><div class="big">${L.epoch}</div></div><div><div class="muted">batch</div><div class="big">${shown}/${L.batch}</div></div><div><div class="muted">last batch avg R(τ)</div><div class="big ${lastAvg==null?'':sgn(lastAvg)}">${lastAvg==null?'—':fmt(lastAvg,1)}</div></div></div>`}})}
@@ -542,10 +467,7 @@ function bars(y0,h,vals,title,hiA){const x0=W*.12,w=W*.76,bw=w/4,mid=y0+h/2;
   text(title,x0,y0-12,tk.muted,18,500,'sans','left');g.strokeStyle=tk.line;g.lineWidth=1.5;g.beginPath();g.moveTo(x0,mid);g.lineTo(x0+w,mid);g.stroke();
   for(let a=0;a<4;a++){const v=vals?vals[a]:0,bh=v*h/2,x=x0+a*bw+bw*.2;g.fillStyle=rgba(v>=0?tk.pos:tk.neg,.8);g.fillRect(x,v>=0?mid-bh:mid,bw*.6,Math.abs(bh));
     text(ARW[a],x+bw*.3,y0+h+16,a===hiA?tk.hl:tk.ink,22,600);if(vals)text(fmt(v,2),x+bw*.3,v>=0?mid-bh-14:mid-bh+14,tk.ink,15)}}
-scenes.push({kicker:'Part 3',title:'The expected grad-log-prob lemma',
-  points:['='+`E<sub><i>x</i>∼<i>P<sub>θ</sub></i></sub>[ ∇<sub><i>θ</i></sub> log <i>P<sub>θ</sub></i>(<i>x</i>) ] = 0`,'Proof: differentiate ∫<i>P<sub>θ</sub></i>(<i>x</i>) = 1, then apply the log-derivative trick.','~'+`For a softmax policy: ∇<sub><i>θ</i></sub> log <i>π</i>(<i>a</i>|<i>s</i>) = <b>e</b><sub><i>a</i></sub> − <i>π</i>(·|<i>s</i>)`,'Each sample is a big, noisy vector. Averaged over many samples, it goes to zero.','This lemma lets us drop and add terms in the gradient, coming next.'],
-  notes:'We sample actions from π(·|start) and plot ∇ log π for the latest sample (top) and the running average (bottom), on the same scale. Single samples are large; the average shrinks toward 0 roughly like 1/√N. This zero-mean property is what justifies reward-to-go and baselines.',
-  controls:()=>[{type:'seg',label:'Animation',opts:[['watch','One sample at a time'],['fast','Fast-forward']],get:()=>fast?'fast':'watch',set:v=>fast=v==='fast'}],
+scenes.push({controls:()=>[{type:'seg',label:'Animation',opts:[['watch','One sample at a time'],['fast','Fast-forward']],get:()=>fast?'fast':'watch',set:v=>fast=v==='fast'}],
   enter:reset,reset,step:sample,
   update(dt){if(!playing)return;if(fast){for(let i=0;i<Math.round(20*P.speed);i++)sample();return}acc+=dt*P.speed;if(acc>.4){acc=0;sample()}},
   draw(){g.clearRect(0,0,W,H);bars(H*.08,H*.32,last,lastA<0?'latest sample':`latest sample: a = ${ARW[lastA]}`,lastA);bars(H*.56,H*.32,n?sum.map(x=>x/n):null,`average of ${n} samples`,-1)},
@@ -554,8 +476,7 @@ scenes.push({kicker:'Part 3',title:'The expected grad-log-prob lemma',
 /* Episode-weight slides: reward-to-go, baselines */
 function epScene(cfg){let lastEp=null,mode=cfg.modes?cfg.modes[0][0]:null;const run=new Runner({pi:()=>model().pi.soft,horizon:()=>T3,hold:2.6,onEnd:r=>lastEp=r.steps.slice()});
   const shown=()=>run.done?run.steps:lastEp;
-  return{kicker:'Part 3',title:cfg.title,points:cfg.points,notes:cfg.notes,
-    controls:()=>cfg.modes?[{type:'seg',label:'Weight each action by',opts:cfg.modes,get:()=>mode,set:v=>mode=v}]:[],
+  return{controls:()=>cfg.modes?[{type:'seg',label:'Weight each action by',opts:cfg.modes,get:()=>mode,set:v=>mode=v}]:[],
     enter(){run.reset();lastEp=null},reset(){run.reset();lastEp=null},update:dt=>run.update(dt,playing),step:()=>run.manual(),
     draw(){drawWorld(cfg.heat?{heat:cfg.heat()}:{});const ep=shown();
       if(ep){drawEpisode(ep,rgba(tk.muted,.5));const w=cfg.weights(ep,mode);ep.forEach((e,i)=>{const a=center(e.s),b=center(e.s2),cs=geo.cs;
@@ -563,16 +484,11 @@ function epScene(cfg){let lastEp=null,mode=cfg.modes?cfg.modes[0][0]:null;const 
       if(!run.done){drawTrail(run)}drawAgent(run.pos())},
     live(){const ep=shown();if(!ep)return'<div class="muted">Weights appear when the first episode ends. The pills on the grid show each action’s weight.</div>';return cfg.table(ep,mode)}}}
 const rowsOf=(ep,f)=>{const idx=ep.length<=8?ep.map((_,i)=>i):[0,1,2,3,-1,ep.length-3,ep.length-2,ep.length-1];return idx.map(i=>i<0?'<tr><td colspan="6" class="muted" style="text-align:center">⋯</td></tr>':f(ep[i],i)).join('')};
-scenes.push(epScene({title:'Don’t let the past distract you',
-  modes:[['R','R(τ)'],['rtg','reward-to-go']],
-  points:['With <i>R</i>(τ), each action is credited with rewards earned <i>before</i> it was taken.','~'+`Reward-to-go: <i>R̂<sub>t</sub></i> = Σ<sub><i>t′</i>=<i>t</i></sub><sup><i>T</i></sup> <i>r<sub>t′</sub></i>`,'='+`∇<sub><i>θ</i></sub><i>J</i> = E[ Σ<sub><i>t</i></sub> ∇<sub><i>θ</i></sub> log <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>) <i>R̂<sub>t</sub></i> ]`,'Past rewards add zero on average but plenty of noise. Dropping them means fewer episodes are needed.'],
-  notes:'After each episode, the pills show the weight given to each action. Toggle between R(τ), where every action gets the same number, and reward-to-go, where an action only gets credit for what came after it. In code: batch_weights += list(reward_to_go(ep_rews)).',
+scenes.push(epScene({modes:[['R','R(τ)'],['rtg','reward-to-go']],
   weights:(ep,m)=>m==='R'?ep.map(()=>epReturn(ep)):rewardToGo(ep),
   table:(ep,m)=>{const R=epReturn(ep),rtg=rewardToGo(ep),on=c=>c===m?'style="color:var(--hl);font-weight:700"':'';
     return`<table class="t"><tr><th>t</th><th>a<sub>t</sub></th><th>r<sub>t</sub></th><th ${on('R')}>R(τ)</th><th ${on('rtg')}>R̂<sub>t</sub></th></tr>${rowsOf(ep,(e,i)=>`<tr><td>${i}</td><td>${ARW[e.a]}</td><td class="${sgn(e.r)}">${fmt(e.r,0)}</td><td ${on('R')}>${fmt(R,0)}</td><td ${on('rtg')}>${fmt(rtg[i],0)}</td></tr>`)}</table>`}}));
-scenes.push(epScene({title:'Baselines',heat:V1soft,
-  points:['~'+`For any function of state alone: E<sub><i>a</i>∼π</sub>[ ∇<sub><i>θ</i></sub> log <i>π<sub>θ</sub></i>(<i>a</i>|<i>s</i>) <i>b</i>(<i>s</i>) ] = 0`,'='+`∇<sub><i>θ</i></sub><i>J</i> = E[ Σ<sub><i>t</i></sub> ∇<sub><i>θ</i></sub> log <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>) ( <i>R̂<sub>t</sub></i> − <i>b</i>(<i>s<sub>t</sub></i>) ) ]`,'The usual choice: <i>b</i>(<i>s</i>) = <i>V</i><sup>π</sup>(<i>s</i>), learned by a network <i>V<sub>φ</sub></i> with a squared-error loss.','<i>R̂<sub>t</sub></i> − <i>V</i>(<i>s<sub>t</sub></i>) estimates the advantage from Part 1: was this action better than usual from here?'],
-  notes:'The shading is V^π for this policy (computed exactly here; in practice V_φ is learned by regressing onto R̂_t). Now the pills are R̂_t − V(s_t): green actions turned out better than expected and get reinforced, red ones worse. Compare with the previous slide, where nearly everything had the same sign.',
+scenes.push(epScene({heat:V1soft,
   weights:ep=>{const V=V1soft(),rtg=rewardToGo(ep);return ep.map((e,i)=>rtg[i]-V[e.s])},
   table:ep=>{const V=V1soft(),rtg=rewardToGo(ep);return`<table class="t"><tr><th>t</th><th>r<sub>t</sub></th><th>R̂<sub>t</sub></th><th>V(s<sub>t</sub>)</th><th>R̂<sub>t</sub> − V</th></tr>${rowsOf(ep,(e,i)=>`<tr><td>${i}</td><td class="${sgn(e.r)}">${fmt(e.r,0)}</td><td>${fmt(rtg[i],0)}</td><td>${fmt(V[e.s],1)}</td><td class="${sgn(rtg[i]-V[e.s])}"><b>${fmt(rtg[i]-V[e.s],1)}</b></td></tr>`)}</table>`}}));
 
@@ -581,10 +497,7 @@ scenes.push(epScene({title:'Baselines',heat:V1soft,
 const reset=()=>{Ls=KINDS.map(([k])=>Array.from({length:SEEDS},()=>makePG3(k)))};
 const avgCurve=arr=>{const n=Math.min(...arr.map(l=>l.curve.length));return Array.from({length:n},(_,i)=>({x:i+1,y:arr.reduce((s,l)=>s+l.curve[i].y,0)/arr.length}))};
 reset();
-scenes.push({kicker:'Part 3',title:'Other forms of the policy gradient',
-  points:['='+`∇<sub><i>θ</i></sub><i>J</i> = E[ Σ<sub><i>t</i></sub> ∇<sub><i>θ</i></sub> log <i>π<sub>θ</sub></i>(<i>a<sub>t</sub></i>|<i>s<sub>t</sub></i>) <i>Φ<sub>t</sub></i> ]`,'~'+`<i>Φ<sub>t</sub></i> can be: <i>R</i>(τ) · <i>R̂<sub>t</sub></i> · <i>R̂<sub>t</sub></i> − <i>b</i>(<i>s<sub>t</sub></i>) · <i>Q</i><sup>π</sup>(<i>s<sub>t</sub></i>,<i>a<sub>t</sub></i>) · <i>A</i><sup>π</sup>(<i>s<sub>t</sub></i>,<i>a<sub>t</sub></i>)`,'All give the same expected gradient. They differ in variance, which sets how fast you learn.','Using the advantage <i>A</i><sup>π</sup> gives Vanilla Policy Gradient (VPG). GAE is a good way to estimate it.'],
-  notes:'Three learners, three seeds each, same learning rate, 10 episodes per epoch; only Φ differs. R(τ) is slowest; reward-to-go removes the noise of past rewards; the learned baseline removes more. Early on the baseline is still being learned, so it can briefly trail plain reward-to-go.',
-  controls:()=>[],enter:reset,reset,onModel:reset,
+scenes.push({controls:()=>[],enter:reset,reset,onModel:reset,
   step(){if(Ls[0][0].epoch<XMAX)Ls.flat().forEach(l=>l.trainEpoch())},
   update(dt){if(!playing)return;acc+=dt*P.speed*15;while(acc>=1&&Ls[0][0].epoch<XMAX){acc--;Ls.flat().forEach(l=>l.trainEpoch())}if(Ls[0][0].epoch>=XMAX)acc=0},
   draw(){g.clearRect(0,0,W,H);chart(g,W,H,KINDS.map(([k,lab,col],i)=>({c:avgCurve(Ls[i]),col:col(),label:lab})),{xMax:XMAX,lo:-60,hi:10,ticks:[-60,-40,-20,0],xlabel:'epochs (10 episodes each)',ref:V1star()[S0],win:10,fs:17,lw:3.5,pr:20})},
@@ -593,10 +506,7 @@ scenes.push({kicker:'Part 3',title:'Other forms of the policy gradient',
 
 /* Closing */
 {const run=new Runner({pi:()=>model().pi.greedy});
-scenes.push({kicker:'What’s next',title:'Now: the notebook',
-  points:['Same algorithm, bigger world: CartPole’s observation is 4 numbers, with 2 actions.','The table of logits becomes a small neural network: <span class="mono">logits_net</span>.','Start with weights = <i>R</i>(τ), then switch to reward-to-go and compare the learning curves.','Next in Spinning Up: VPG, TRPO and PPO.'],
-  notes:'Hand off to 1_policy_grad.ipynb. Exercise: replace batch_weights += [ep_ret] * ep_len with reward-to-go and compare. The robot here follows the optimal policy.',
-  controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
+scenes.push({controls:()=>[],enter(){run.reset()},update:dt=>run.update(dt,playing),step:()=>run.manual(),reset:()=>run.reset(),
   draw(){const m=model();drawWorld({heat:m.Vs,pi:m.pi.greedy});drawTrail(run);drawAgent(run.pos())}})}
 /* ================= Registry ================= */
 const SCENE_IDS=['cover','part1','what-can-rl-do','meet','loop','states','actions','policies','stochastic','trajectories','return','problem',

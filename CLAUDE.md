@@ -16,9 +16,10 @@ Lecture material following OpenAI Spinning Up.
   Part 2 can come back as `pages/part2.md`). Slide text is Markdown + KaTeX; bullets build with `<v-clicks>`;
   speaker notes are the `<!-- -->` comment at the end of each slide.
 - `layouts/demo.vue`: kicker + title; `::left::` slot = bullets, live readout below; right = canvas for frontmatter
-  `scene:` + its controls + transport (play/step/reset/speed). `cover: true` = title-style slide.
+  `scene:` + its controls + transport (play/step/reset/speed). `cover: true` = title-style slide; `paused: true` = animation starts paused (other slides auto-play).
   `layouts/code.vue`: slide 22, code block with per-click line highlighting (`{all|1-8|...}{at:0}`).
-- `engine/gridworld.js`: the simulation/drawing code ported from the HTML (no DOM UI). Scenes are registered by id in
+- `engine/gridworld.js`: the simulation/drawing code ported from the HTML (no DOM UI, no slide text: titles, bullets
+  and notes live only in the Markdown). Scenes are registered by id in
   SCENE_IDS (order must match the scene list). Seeded RNG `rand()` (not Math.random); reseeded per slide on entry/reset.
 - `setup/shortcuts.ts`: p play/pause, . step, r reset, +/- speed (plus Slidev's own keys: arrows, o overview, d dark, g goto).
 - `global-top.vue`: footer (part label from nearest `part:` frontmatter, progress, slide number). `style.css`: theme tokens
