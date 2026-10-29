@@ -117,6 +117,10 @@ kicker: Part 3
 
 ::left::
 
+- $$
+  \hat g = \frac{1}{|\mathcal{D}|} \sum_{\tau\in\mathcal{D}} \sum_t \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, R(\tau)
+  $$
+
 <v-clicks>
 
 - The policy: a network outputs logits; `Categorical` turns them into $\pi_\theta(\cdot \mid s)$.

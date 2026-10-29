@@ -20,6 +20,7 @@ This robot acts completely at random. By the end of Part 1 we will be able to sa
 ---
 layout: demo
 scene: what-can-rl-do
+paused: true
 kicker: Part 1
 ---
 
@@ -27,10 +28,12 @@ kicker: Part 1
 
 ::left::
 
-<v-clicks>
 
 - Control robots, in simulation and in the real world.
-- Beat top human players at strategy games: Go and Dota.
+
+<v-clicks>
+
+  - Beat top human players at strategy games: Go and Dota.
 - Play Atari games straight from raw pixels.
 - Teach simulated robots to follow human instructions.
 
@@ -50,9 +53,10 @@ kicker: The running example
 
 ::left::
 
+- A robot starts in the bottom-left corner.
+
 <v-clicks>
 
-- A robot starts in the bottom-left corner.
 - Goal: <b class="pos">+10</b>. Lava: <b class="neg">−50</b>. Either one ends the episode.
 - Every other step costs <b class="neg">−1</b>, so shorter paths are better.
 - The floor is slippery: sometimes the robot slides sideways instead.
@@ -73,9 +77,10 @@ kicker: Key concepts
 
 ::left::
 
+- The agent observes the state and picks an action.
+
 <v-clicks>
 
-- The agent observes the state and picks an action.
 - The environment moves to a new state and hands back a reward.
 - The agent's goal: maximize its cumulative reward, the **return**.
 
@@ -172,9 +177,10 @@ kicker: Key concepts
 
 ::left::
 
+- Categorical, for discrete actions: the network outputs one logit per action; softmax turns them into probabilities.
+
 <v-clicks>
 
-- Categorical, for discrete actions: the network outputs one logit per action; softmax turns them into probabilities.
 - $$
   \pi_\theta(\cdot \mid s) = \operatorname{softmax}(\text{logits}), \quad a \sim \pi_\theta(\cdot \mid s)
   $$
@@ -373,7 +379,6 @@ kicker: Key concepts
 - $$
   A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)
   $$
-- Green: better than average. Red: worse.
 - Policy gradients raise $\pi(a \mid s)$ for actions with positive advantage.
 
 </v-clicks>

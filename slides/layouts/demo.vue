@@ -8,7 +8,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import { useNav, useSlideContext } from '@slidev/client'
 import { activate, bindCanvas, getGeo, getScene, isTerm, isWall, readTokens, R, C, transport } from '../engine/gridworld.js'
 
-const props = defineProps({ scene: { type: String, required: true }, kicker: String, cover: Boolean })
+const props = defineProps({ scene: { type: String, required: true }, kicker: String, cover: Boolean, paused: Boolean })
 const { $page, $renderContext, $scale } = useSlideContext()
 const { currentSlideNo } = useNav()
 const sc = getScene(props.scene)
@@ -22,6 +22,10 @@ const controls = shallowRef([])
 const refreshControls = () => { ver.value++; controls.value = sc.controls ? sc.controls() : [] }
 let size = { w: 0, h: 0 }, raf = 0, last = 0, ro
 
+function enter() {
+  activate(sc, $page.value)
+  if (props.paused) { transport.playing = false; isPlaying.value = false} else {transport.playing = true; isPlaying.value = true}
+}
 function fitCanvas(c, w, h) {
   const d = (window.devicePixelRatio || 1) * ($scale?.value || 1), ctx = c.getContext('2d')
   if (c.width !== Math.round(w * d)) { c.width = Math.round(w * d); c.height = Math.round(h * d) }
@@ -47,12 +51,12 @@ function frame(now) {
 }
 function start() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame) } }
 
-watch(current, (on) => { if (on) { activate(sc, $page.value); refreshControls(); start() } })
+watch(current, (on) => { if (on) { enter(); refreshControls(); start() } })
 onMounted(() => {
   ro = new ResizeObserver(() => { size = { w: stage.value.clientWidth, h: stage.value.clientHeight }; draw(0) })
   ro.observe(stage.value)
   refreshControls()
-  if (current.value) { activate(sc, $page.value); start() }
+  if (current.value) { enter(); start() }
 })
 onBeforeUnmount(() => { cancelAnimationFrame(raf); raf = 0; ro && ro.disconnect() })
 
@@ -67,7 +71,7 @@ function onClick(e) {
 }
 const togglePlay = () => { transport.playing = !transport.playing; isPlaying.value = transport.playing }
 const doStep = () => sc.step && sc.step()
-const doReset = () => { activate(sc, $page.value); refreshControls() }
+const doReset = () => { enter(); refreshControls() }
 const setSpeed = (f) => { transport.speed = transport.speed * f; speed.value = transport.speed }
 const label = l => String(l).replace(/\^π/g, '<sup>π</sup>')
 </script>
