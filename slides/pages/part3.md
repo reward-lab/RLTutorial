@@ -27,9 +27,11 @@ kicker: Part 3
 
 ::left::
 
-<v-clicks>
 
 - Parameterize the policy as $\pi_\theta$. Here $\theta$ is one logit per cell and action: 22 × 4 numbers.
+
+<v-clicks>
+
 - $$
   \theta_{k+1} = \theta_k + \alpha \nabla_\theta J(\pi_\theta)
   $$
@@ -52,11 +54,12 @@ kicker: Part 3
 
 ::left::
 
-<v-clicks>
-
 - $$
   P(\tau \mid \theta) = \rho_0(s_0) \prod_t P(s_{t+1} \mid s_t, a_t)\, \pi_\theta(a_t \mid s_t)
   $$
+
+<v-clicks>
+
 - Log-derivative trick: $\nabla_\theta P(\tau \mid \theta) = P(\tau \mid \theta)\, \nabla_\theta \log P(\tau \mid \theta)$
 - $$
   \begin{array}{l}

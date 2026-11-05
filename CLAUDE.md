@@ -50,3 +50,8 @@ Lecture material following OpenAI Spinning Up.
 - Known quirks (offered fixes, not yet requested): slide 9 histogram fixed to [−20, 10] and rollouts capped at 200 steps;
   slide 11 Q* argmax circles show at sweep 0; temperature slider absent on slide 9; with slip 0.6 + γ 0.99 the optimal
   policy walks into lava (lava −10 ≈ max discounted step cost) — a reward-design talking point.
+
+## Environment
+- Repo moved: ~/repos/RLTutorial → ~/repos/rl/RLTutorial → ~/repos/reward-lab/RLTutorial. Claude history merged into
+  ~/.claude/projects/-Users-jehandad-repos-reward-lab-RLTutorial via ~/migrate_rltutorial_history.sh (backup in ~/.claude/projects-backup-*).
+- `.venv` still has old absolute paths (activate, pip shebangs) — recreate: `rm -rf .venv && python3.13 -m venv .venv && .venv/bin/pip install torch gymnasium jupyter`.

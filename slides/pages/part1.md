@@ -100,9 +100,11 @@ kicker: Key concepts
 
 ::left::
 
-<v-clicks>
 
 - State $s$: a complete description of the world.
+
+<v-clicks>
+
 - Here $s$ = (row, column): the map never changes, so position is everything.
 - Observation $o$: what the agent sees. Our agent sees the full state, $o = s$.
 
@@ -122,9 +124,11 @@ kicker: Key concepts
 
 ::left::
 
-<v-clicks>
 
 - The action space is the set of all valid actions.
+
+<v-clicks>
+
 - $$
   \begin{array}{l}
   \text{discrete: } a \in \{\uparrow, \rightarrow, \downarrow, \leftarrow\} \\
@@ -150,9 +154,11 @@ kicker: Key concepts
 
 ::left::
 
-<v-clicks>
 
 - A policy is the agent's rule for choosing actions.
+
+<v-clicks>
+
 - $$
   \begin{array}{l}
   \text{deterministic: } a_t = \mu(s_t) \\
@@ -205,9 +211,11 @@ kicker: Key concepts
 
 ::left::
 
+- A trajectory is the sequence of states and actions in an episode.
+
+
 <v-clicks>
 
-- A trajectory is the sequence of states and actions in an episode.
 - $$
   \begin{array}{l}
   \tau = (s_0, a_0, s_1, a_1, \dots) \\
@@ -289,9 +297,11 @@ kicker: Key concepts
 
 ::left::
 
+- How good is it to be here, if I follow $\pi$ from now on?
+
 <v-clicks>
 
-- How good is it to be here, if I follow $\pi$ from now on?
+
 - $$
   \begin{array}{l}
   V^\pi(s) = \mathbb{E}_{\tau\sim\pi}\big[R(\tau) \mid s_0 = s\big] \\
@@ -316,9 +326,10 @@ kicker: Key concepts
 
 ::left::
 
+- Same questions, under the best possible policy.
+
 <v-clicks>
 
-- Same questions, under the best possible policy.
 - $$
   \begin{array}{l}
   V^*(s) = \max_\pi V^\pi(s) \\
@@ -346,9 +357,10 @@ kicker: Key concepts
 
 ::left::
 
+- Value here = reward now + discounted value of where you land.
+
 <v-clicks>
 
-- Value here = reward now + discounted value of where you land.
 - $$
   \begin{array}{l}
   V^\pi(s) = \mathbb{E}_{a\sim\pi,\, s'\sim P}\big[r + \gamma V^\pi(s')\big] \\
@@ -373,9 +385,11 @@ kicker: Key concepts
 
 ::left::
 
-<v-clicks>
 
 - How much better is action $a$ than what $\pi$ does on average?
+
+<v-clicks>
+
 - $$
   A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)
   $$
@@ -397,9 +411,10 @@ kicker: Key concepts
 
 ::left::
 
+- A Markov decision process: $\langle S, A, R, P, \rho_0 \rangle$
+
 <v-clicks>
 
-- A Markov decision process: $\langle S, A, R, P, \rho_0 \rangle$
 - Markov property: the next state depends only on the current state and action, not on the history.
 - $$
   \begin{array}{l}
