@@ -4,6 +4,10 @@ Lecture material following OpenAI Spinning Up.
 
 ## Files
 - `1_policy_grad.ipynb` — simplest policy gradient on CartPole (torch + gymnasium).
+- `1_policy_grad-jax.ipynb` — same in JAX (flax.linen MLP, distrax Categorical, optax adam). Kernel `su_venv` (Python 3.11).
+- `requirements.txt` — minimal pins for the jax notebook only (was a full freeze of `spinningup/.venv`, incl. torch; trimmed
+  2026-11-04). `pygame-ce` supplies `pygame` for `render_mode='human'`; don't also install `gymnasium[classic-control]`
+  (pulls `pygame`, conflicts). `tfp-nightly` is distrax 0.1.9's dep, pinned to the tested nightly.
 - `rl_intro_gridworld.html` — self-contained animated gridworld for the "Key Concepts in RL" lecture
   (https://spinningup.openai.com/en/latest/spinningup/rl_intro.html). Open in a browser; also published at
   https://claude.ai/artifact/TnXGyKVWBHxaHTvTLVwvVw.
